@@ -3,7 +3,11 @@
 require 'rubygems'
 require 'commander'
 require 'yaml'
+require 'erb'
+require 'ostruct'
 include  Commander::UI
+
+vhost_dir = "/etc/apache2/sites-enabled"
 
 sitename = ARGV[0]
 if sitename.nil? || sitename == ""
@@ -16,21 +20,38 @@ def cmd(line)
   print "[executing]\n"
   color line, :magenta
   print "[response]\n"
-  color %x[#{line}], :yellow
+  # color %x[#{line}], :yellow
 end
 
 users = YAML.load_file("users.yml")
 
-vars = { 
+vars = OpenStruct.new({
   sitename: ARGV[0],
   username: ARGV[1],
   password: %x[ pwgen -1 ].strip,
   
   db_user: ARGV[1],
-  db_table: ARGV[2],
-  db_passwd: %x[ pwgen -1 ].strip
-}
+  db_name: ARGV[2],
+  db_password: %x[ pwgen -1 ].strip
+})
 
+
+if vars.username.nil?
+  vars.username = vars.sitename[/(www\.)?(.*)\.\w{2,3}$/, 2].gsub(/\W/, "_")
+  vars.db_user  = vars.username
+end
+
+if vars.db_name.nil?
+  vars.db_name  = vars.sitename[/(www\.)?(.*)$/, 2].gsub(/\W/, "_")
+end
+
+
+# if users.include? vars.username
+#   color "#{vars.username} already exists!", :red
+#   exit(1)
+# end
+
+print vars.marshal_dump.to_yaml
 
 # 1. Create User
 
@@ -39,22 +60,34 @@ vars = {
 # mkdir /var/www/domain.com
 # chown -R client:companyName /var/www/domain.com
 
-# 2. Add groupname to www-data
-# usermod www-data -a -G groupname 
+cmd "mkdir /var/www/#{vars.sitename}"
+cmd "groupadd #{vars.username}"
+cmd %Q[useradd -g #{vars.username} -d /var/www/#{vars.sitename} -s /bin/bash -c "#{vars.username}" #{vars.username}]
 
-# 3. Create vhost
-# copy file
-
-# 4. Prepare dir
-# chmod 0750 /var/www/domain.com
+# 1b. Prepare dir
 # su client
 # cd ~
 # mkdir fcgi-bin; mkdir uploads; mkdir sessions; mkdir logs; mkdir public;
 
+cmd "chmod 0750 /var/www/#{vars.sitename}"
+cmd %Q[su #{vars.username} -c "cd && mkdir fcgi-bin && mkdir uploads && mkdir sessions && mkdir logs && mkdir public"]
+
+# 2. Add groupname to www-data
+# usermod www-data -a -G groupname 
+cmd "usermod www-data -a -G #{vars.username}"
+
+
+# 3. Create vhost
+vhost = ERB.new(File.read("templates/vhost.conf.erb")).result(binding)
+# copy file
+File.open("#{vhost_dir}/#{sitename}", "w") { |f| f.write(vhost) }
+
+
 # 5. Create php fcgi script
 # cd fcgi-bin;
 
-fcgi = File.read("templates/php.fcgi") % vars 
+fcgi = File.read("templates/php.fcgi") % vars.marshal_dump
+File.open("/var/www/#{sitename}/fcgi-bin/php.fcgi", "w") { |f| f.write(vhost) }
 
 # copy file
 # chmod +x php.fcgi
@@ -67,9 +100,20 @@ fcgi = File.read("templates/php.fcgi") % vars
 
 # 7. deploy site
 # create index.php-file
+# set owners on dir stuff
+cmd "chown -R #{vars.username}:#{vars.username} /var/www/#{vars.sitename}"
+
 # enable vhost
 # restart apache
 
+sql = File.read("templates/create_db.sql") % vars.marshal_dump
+
+# 8 Table stuff
 # Create DB user, tablename
 
+
+
 # save of username, password, db_table, db_user, db_passwd 
+
+users[vars.username] = vars.marshal_dump
+File.open("users.yml", "w") { |f| f.write(users.to_yaml) }

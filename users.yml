@@ -1,2 +1,17 @@
----
+--- 
 :users: {}
+
+new_leomira: 
+  :sitename: new.leomira.com
+  :username: new_leomira
+  :password: hepuawue
+  :db_user: new_leomira
+  :db_name: new_leomira_com
+  :db_password: ahleejuu
+raggningsreplik: 
+  :sitename: raggningsreplik.se
+  :username: raggningsreplik
+  :password: liunahph
+  :db_user: raggningsreplik
+  :db_name: raggningsreplik_se
+  :db_password: daisheec

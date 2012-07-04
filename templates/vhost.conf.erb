@@ -1,0 +1,39 @@
+<VirtualHost *:80>
+  SuExecUserGroup <%=vars.username%> <%=vars.username%>
+
+  ServerAdmin info@<%=vars.sitename %>
+  ServerName <%=vars.sitename %>
+  # ServerAlias <%=vars.sitename %>
+
+  DirectoryIndex index.php
+  DocumentRoot /var/www/<%=vars.sitename %>/public/
+  ErrorLog /var/www/<%=vars.sitename %>/logs/error.log
+
+  Alias /fcgi-bin/ /var/www/<%=vars.sitename %>/fcgi-bin/
+  AddHandler php-fastcgi .php
+  AddType application/x-httpd-php .php
+  Action php-fastcgi /fcgi-bin/php.fcgi
+
+  <Directory /var/www/<%=vars.sitename %>/fcgi-bin/>
+    SetHandler fcgid-script
+    AllowOverride None
+    Options -Indexes +ExecCGI -FollowSymlinks -SymLinksIfOwnerMatch
+    Order allow,deny
+    Allow from all
+  </Directory>
+
+  RewriteEngine On
+
+  # Remove the www alias
+  RewriteCond %{HTTP_HOST} ^www.<%= vars.sitename.gsub(".", "\.") %>$ [NC]
+  RewriteRule ^(.+)$ http://<%= vars.sitename%>$1 [R=301,L]
+
+  RewriteCond %{REQUEST_URI} ^/.+$
+  RewriteCond %{REQUEST_FILENAME} !\.(gif|jpe?g|png|js|css|swf|php|ico|txt|pdf)$ [OR]
+  RewriteCond %{REQUEST_FILENAME} !-f [OR]
+  RewriteCond %{REQUEST_FILENAME} !-d [OR]
+  RewriteCond %{REQUEST_FILENAME} !-l
+  RewriteRule ^ - [L]
+
+  RewriteRule ^/(.+)$ /index.php$1 [PT,L,QSA]
+</VirtualHost>
