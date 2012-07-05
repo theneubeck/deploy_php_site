@@ -7,6 +7,7 @@ require 'erb'
 require 'ostruct'
 include  Commander::UI
 
+# following http://blog.awellis.me/post/3756809191/configuring-a-lamp-stack-on-debian-with-fastcgi-and
 vhost_dir = "/etc/apache2/sites-enabled"
 
 sitename = ARGV[0]
@@ -20,7 +21,8 @@ def cmd(line)
   print "[executing]\n"
   color line, :magenta
   print "[response]\n"
-  # color %x[#{line}], :yellow
+  # execute command
+  color %x[#{line}], :yellow
 end
 
 users = YAML.load_file("users.yml")
@@ -46,10 +48,10 @@ if vars.db_name.nil?
 end
 
 
-# if users.include? vars.username
-#   color "#{vars.username} already exists!", :red
-#   exit(1)
-# end
+ if users.include? vars.username
+   color "#{vars.username} already exists!", :red
+   exit(1)
+ end
 
 print vars.marshal_dump.to_yaml
 
@@ -87,11 +89,10 @@ File.open("#{vhost_dir}/#{sitename}", "w") { |f| f.write(vhost) }
 # cd fcgi-bin;
 
 fcgi = File.read("templates/php.fcgi") % vars.marshal_dump
-File.open("/var/www/#{sitename}/fcgi-bin/php.fcgi", "w") { |f| f.write(vhost) }
-
-# copy file
+# write fcgi file
+File.open("/var/www/#{sitename}/fcgi-bin/php.fcgi", "w") { |f| f.write(fcgi) }
 # chmod +x php.fcgi
-# set correct user
+cmd "chmod +x /var/www/#{sitename}/fcgi-bin/php.fcgi"
 
 # 6. Create Php.ini file
 # create dir
@@ -100,20 +101,27 @@ File.open("/var/www/#{sitename}/fcgi-bin/php.fcgi", "w") { |f| f.write(vhost) }
 
 # 7. deploy site
 # create index.php-file
+ File.open("/var/www/#{sitename}/public/index.php", "w") { |f| f.write(Q%[<?php\necho "Hello World";\n] }
 # set owners on dir stuff
 cmd "chown -R #{vars.username}:#{vars.username} /var/www/#{vars.sitename}"
 
 # enable vhost
 # restart apache
 
-sql = File.read("templates/create_db.sql") % vars.marshal_dump
-
 # 8 Table stuff
 # Create DB user, tablename
-
-
+sql = File.read("templates/create_db.sql") % vars.marshal_dump
+cmd %Q[mysql -uroot -p -e "#{sql}"]
 
 # save of username, password, db_table, db_user, db_passwd 
+puts
+color "Your details:", :green
+color "=" * 30, :green
+vars.marshal_dump.each do |k, v|
+  color "#{k} :\t#{v}", :green
+end
+color "=" * 30, :green
+puts
 
 users[vars.username] = vars.marshal_dump
 File.open("users.yml", "w") { |f| f.write(users.to_yaml) }
