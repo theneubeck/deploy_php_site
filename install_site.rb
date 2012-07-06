@@ -52,10 +52,10 @@ if vars.db_name.nil?
 end
 
 
- if users.include? vars.username
-   color "#{vars.username} already exists!", :red
-   exit(1)
- end
+if users.include? vars.username
+  color "#{vars.username} already exists!", :red
+  exit(1)
+end
 # 1. Create User
 
 cmd "mkdir /var/www/#{vars.sitename}"
@@ -65,7 +65,7 @@ cmd %Q[useradd -g #{vars.username} -d /var/www/#{vars.sitename} -s /bin/bash -c 
 # 1b. Prepare dir
 
 cmd "chmod 0750 /var/www/#{vars.sitename}"
-cmd %Q[su #{vars.username} -c "cd && mkdir fcgi-bin && mkdir uploads && mkdir sessions && mkdir logs && mkdir public"]
+cmd %Q[cd /var/www/#{vars.sitename} && mkdir fcgi-bin && mkdir uploads && mkdir sessions && mkdir logs && mkdir public"]
 
 # 2. Add groupname to www-data
 cmd "usermod www-data -a -G #{vars.username}"
@@ -83,7 +83,8 @@ File.open("/var/www/#{vars.sitename}/fcgi-bin/php.fcgi", "w") { |f| f.write(fcgi
 cmd "chmod +x /var/www/#{vars.sitename}/fcgi-bin/php.fcgi"
 
 # 6. Create Php.ini file
-php_ini = File.read("templates/php.ini") % vars.marshal_dump
+php_ini = ERB.new(File.read("templates/php.ini.erb")).result(binding)
+cmd "mkdir /etc/php5/vhosts.d/#{vars.sitename}"
 File.open("/etc/php5/vhosts.d/#{vars.sitename}/php.ini", "w") { |f| f.write(php_ini) }
 
 
