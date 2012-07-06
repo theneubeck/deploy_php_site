@@ -106,6 +106,10 @@ cmd "/usr/sbin/service apache2 restart"
 sql = File.read("templates/create_db.sql") % vars.marshal_dump
 cmd %Q[mysql -uroot -p -e "#{sql}"]
 
+
+# 10 set user password
+cmd %Q[echo "#{vars.password}:#{vars.username}" | /usr/sbin/chpasswd ]
+
 # save of username, password, db_table, db_user, db_passwd 
 puts
 color "Your details:", :green
