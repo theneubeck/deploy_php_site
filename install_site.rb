@@ -122,3 +122,18 @@ puts
 
 users[vars.username] = vars.marshal_dump
 File.open("users.yml", "w") { |f| f.write(users.to_yaml) }
+
+cmd "su #{vars.username} && cd"
+cmd "grep -rni --color leomira_d0ri0"
+
+color "Now you're on your own. Do something like this:", :green
+color %Q[
+  # rsync the dir
+  rsync -avz root@leomira.com:/home/leomira/public_html/. ./public/.
+
+  # dump the db
+  mkdir dbs
+  ssh root@leomira.com "mysqldump -uroot <old_db>" > dbs/#{vars.sitename}.sql
+
+  cat dbs/#{vars.sitename}.sql | mysql -u #{vars.db_user} #{vars.db_name} -p 
+], :yellow
