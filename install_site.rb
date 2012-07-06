@@ -25,7 +25,11 @@ def cmd(line)
   color %x[#{line}], :yellow
 end
 
-users = YAML.load_file("users.yml")
+users = {}
+
+if File.exist? "users.yml"
+  users = YAML.load_file("users.yml")
+end
 
 vars = OpenStruct.new({
   sitename: ARGV[0],
