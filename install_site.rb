@@ -8,7 +8,7 @@ require 'ostruct'
 include  Commander::UI
 
 # following http://blog.awellis.me/post/3756809191/configuring-a-lamp-stack-on-debian-with-fastcgi-and
-vhost_dir = "/etc/apache2/sites-enabled"
+vhost_dir = "/etc/apache2/sites-avaible"
 
 sitename = ARGV[0]
 if sitename.nil? || sitename == ""
@@ -108,7 +108,7 @@ cmd %Q[mysql -uroot -p -e "#{sql}"]
 
 
 # 10 set user password
-cmd %Q[echo "#{vars.password}:#{vars.username}" | /usr/sbin/chpasswd ]
+cmd %Q[echo "#{vars.username}:#{vars.password}" | /usr/sbin/chpasswd ]
 
 # save of username, password, db_table, db_user, db_passwd 
 puts
@@ -124,7 +124,7 @@ users[vars.username] = vars.marshal_dump
 File.open("users.yml", "w") { |f| f.write(users.to_yaml) }
 
 cmd "su #{vars.username} && cd"
-cmd "grep -rni --color leomira_d0ri0"
+cmd "grep -rni --color leomira_d0ri0 ."
 
 color "Now you're on your own. Do something like this:", :green
 color %Q[
