@@ -65,7 +65,7 @@ cmd %Q[useradd -g #{vars.username} -d /var/www/#{vars.sitename} -s /bin/bash -c 
 # 1b. Prepare dir
 
 cmd "chmod 0750 /var/www/#{vars.sitename}"
-cmd %Q[cd /var/www/#{vars.sitename} && mkdir fcgi-bin && mkdir uploads && mkdir sessions && mkdir logs && mkdir public"]
+cmd %Q[cd /var/www/#{vars.sitename} && mkdir fcgi-bin && mkdir uploads && mkdir sessions && mkdir logs && mkdir public]
 
 # 2. Add groupname to www-data
 cmd "usermod www-data -a -G #{vars.username}"
