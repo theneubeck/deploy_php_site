@@ -73,23 +73,23 @@ cmd "usermod www-data -a -G #{vars.username}"
 # 3. Create vhost
 vhost = ERB.new(File.read("templates/vhost.conf.erb")).result(binding)
 # copy file
-File.open("#{vhost_dir}/#{sitename}", "w") { |f| f.write(vhost) }
+File.open("#{vhost_dir}/#{vars.sitename}", "w") { |f| f.write(vhost) }
 
 
 # 5. Create php fcgi script
 fcgi = File.read("templates/php.fcgi") % vars.marshal_dump
 # write fcgi file
-File.open("/var/www/#{sitename}/fcgi-bin/php.fcgi", "w") { |f| f.write(fcgi) }
-cmd "chmod +x /var/www/#{sitename}/fcgi-bin/php.fcgi"
+File.open("/var/www/#{vars.sitename}/fcgi-bin/php.fcgi", "w") { |f| f.write(fcgi) }
+cmd "chmod +x /var/www/#{vars.sitename}/fcgi-bin/php.fcgi"
 
 # 6. Create Php.ini file
 php_ini = File.read("templates/php.ini") % vars.marshal_dump
-File.open("/etc/php5/vhosts.d/#{sitename}/php.ini", "w") { |f| f.write(php_ini) }
+File.open("/etc/php5/vhosts.d/#{vars.sitename}/php.ini", "w") { |f| f.write(php_ini) }
 
 
 # 7. deploy site
 # create index.php-file
-File.open("/var/www/#{vars.sitename}/public/index.php", "w") { |f| f.write(Q%[<?php\necho "Hello World";\n] }
+File.open("/var/www/#{vars.sitename}/public/index.php", "w") { |f| f.write(%Q[<?php\necho "Hello #{vars.sitename}";\n]) }
 # set owners on dir stuff
 cmd "chown -R #{vars.username}:#{vars.username} /var/www/#{vars.sitename}"
 
