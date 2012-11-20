@@ -31,6 +31,8 @@ if File.exist? "users.yml"
   users = YAML.load_file("users.yml")
 end
 
+
+
 vars = OpenStruct.new({
   sitename: ARGV[0],
   username: ARGV[1],
@@ -45,6 +47,13 @@ vars = OpenStruct.new({
 if vars.username.nil?
   vars.username = vars.sitename[/(www\.)?(.*)\.\w{2,3}$/, 2].gsub(/\W/, "_")
   vars.db_user  = vars.username
+end
+
+if vars.username.length > 16
+  vars.username = vars.username[0..15]
+end
+if vars.db_user.length > 16
+  vars.db_user = vars.db_user[0..15]
 end
 
 if vars.db_name.nil?
@@ -95,7 +104,7 @@ File.open("/var/www/#{vars.sitename}/public/index.php", "w") { |f| f.write(%Q[<?
 cmd "chown -R #{vars.username}:#{vars.username} /var/www/#{vars.sitename}"
 
 
-# 8. Apaceh
+# 8. Apache
 cmd "a2ensite #{vars.sitename}"
 cmd "/usr/sbin/service apache2 restart"
 # enable vhost
