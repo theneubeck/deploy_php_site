@@ -135,8 +135,9 @@ File.open("users.yml", "w") { |f| f.write(users.to_yaml) }
 
 color "Now you're on your own. Do something like this:", :green
 color %Q[
+  # tada
   su #{vars.username} && cd
-  grep -rni --color leomira_d0ri0 public
+  grep -rni --color -C3 leomira_d0ri0 .
 
   # rsync the dir
   rsync -avz root@leomira.com:/home/leomira/public_html/. ./public/.
@@ -146,4 +147,11 @@ color %Q[
   ssh root@leomira.com "mysqldump -uroot <old_db>" > dbs/#{vars.sitename}.sql
 
   cat dbs/#{vars.sitename}.sql | mysql -u #{vars.db_user} #{vars.db_name} -p 
+
+
+  ##### You might also need to 
+  * Add CI or stuff to the "/var/www/#{vars.sitename}/ directory
+  * change the vhost in "#{vhost_dir}/#{vars.sitename}"
+
+
 ], :yellow
